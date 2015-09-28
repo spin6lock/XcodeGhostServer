@@ -20,6 +20,14 @@ def decode(rawstr):
     decode_json = json.loads(plaintext[:-ord(padding_char)])
     return package_len, command_len, version, decode_json
 
+def encode(rawinput):
+    obj = DES.new(key[:8])
+    rawstr = rawinput.encode("utf8")
+    padding_size = DES.block_size - len(rawstr) % DES.block_size
+    padding = chr(padding_size) * padding_size
+    final = rawstr+ padding
+    return "AAAABBBB" + obj.encrypt(final)
+
 def pop_warning(appname):
     ret = u'{ \
         "alertHeader":"Warning", \
@@ -35,10 +43,11 @@ def index():
     raw = request.get_data()
     logging.debug("receive:%s", b2a_hex(raw))
     try:
-        print decode(raw)
-        _,_,_, info = decode(raw)
+        a,b,c, info = decode(raw)
+        print a, b, c, info
+        logging.debug("after decode: %s", pprint.pformat(info))
         appname = info["app"]
-        return pop_warning(appname) 
+        return encode(pop_warning(appname))
     except Exception, err:
         pass
     return ""
